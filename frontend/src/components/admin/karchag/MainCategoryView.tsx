@@ -146,10 +146,12 @@ export const MainCategoryView: React.FC = () => {
     }
   };
 
-  const filteredSubCategories = subCategories.filter(sc =>
-    sc.name_english?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sc.name_tibetan?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredSubCategories = subCategories
+    .filter(sc =>
+      sc.name_english?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sc.name_tibetan?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 
   if (isLoading) {
     return (

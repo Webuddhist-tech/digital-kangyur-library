@@ -167,6 +167,7 @@
     "englishDescription": "དབྱིན་ཡིག་འགྲེལ་བཤད།",
     "tibetanDescription": "བོད་ཡིག་འགྲེལ་བཤད།",
     "orderIndex": "རིམ་པའི་ཨང་ཐོ།",
+    "displayOrder": "འགྲེམ་སྟོན་རིམ་པ།",
     "cancel": "རྩིས་མེད་གཏོང་།",
     "createCategory": "སྡེ་ཚན་བཟོ།",
     "saveChanges": "བཟོ་བཅོས་ཉར་ཚགས།",

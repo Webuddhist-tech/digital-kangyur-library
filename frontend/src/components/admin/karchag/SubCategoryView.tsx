@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/atoms/button';
 import { Input } from '@/components/ui/atoms/input';
+import { Textarea } from '@/components/ui/atoms/textarea';
 import { Card } from '@/components/ui/atoms/card';
 import { Edit, Search, Plus } from 'lucide-react';
 import api from '@/utils/api';
@@ -12,6 +13,7 @@ import { CategoryForm } from './CategoryForm';
 import { TextCard } from './TextCard';
 import { TextEditModal } from './TextEditModal';
 import { useLanguage } from '@/hooks/useLanguage';
+import { isContentOnlyCategory } from '@/utils/karchagCategory';
 
 function newTextDraft(subCategoryId: string) {
   return {
@@ -81,6 +83,8 @@ export const SubCategoryView: React.FC = () => {
   const [isCategoryFormOpen, setIsCategoryFormOpen] = useState(false);
   const [isTextEditModalOpen, setIsTextEditModalOpen] = useState(false);
   const [formMode, setFormMode] = useState<'create' | 'edit'>('edit');
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [contentDraft, setContentDraft] = useState('');
 
   const { data: mainCategoryData } = useQuery({
     queryKey: ['karchag', 'main-category', mainId],
@@ -134,7 +138,7 @@ export const SubCategoryView: React.FC = () => {
   const subCategories = subCategoriesData || [];
   const isLoading = isLoadingSub || isLoadingTexts;
 
-  const isTantra = mainCategory?.name_english?.toLowerCase() === 'tantra';
+  const isContentOnly = isContentOnlyCategory(mainCategory?.name_english);
 
   const updateSubCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.updateKarchagSubCategory(id, data),
@@ -143,6 +147,8 @@ export const SubCategoryView: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['karchag', 'sub-category', subId] });
       setIsCategoryFormOpen(false);
       setEditingCategory(null);
+      setIsEditingContent(false);
+      setContentDraft('');
       toast.success('Subcategory updated successfully');
     },
     onError: (error: any) => {
@@ -177,11 +183,41 @@ export const SubCategoryView: React.FC = () => {
   });
 
   const handleEditCategory = (item: any) => {
+    if (isContentOnly) {
+      setContentDraft(item.content ?? '');
+      setIsEditingContent(true);
+      return;
+    }
     setFormMode('edit');
     setEditingCategory(item);
     setIsCategoryFormOpen(true);
   };
 
+  const handleCancelContentEdit = () => {
+    setIsEditingContent(false);
+    setContentDraft('');
+  };
+
+  const handleSaveContent = () => {
+    if (!subCategory) return;
+    updateSubCategoryMutation.mutate({
+      id: subCategory.id,
+      data: {
+        main_category_id: mainId,
+        name_english: subCategory.name_english,
+        name_tibetan: subCategory.name_tibetan,
+        description_english: subCategory.description_english,
+        description_tibetan: subCategory.description_tibetan,
+        order_index: subCategory.order_index,
+        is_active: subCategory.is_active,
+        only_content: true,
+        content: contentDraft,
+      },
+    });
+  };
+
+  const savedContent = subCategory?.content ?? '';
+  const isContentDirty = isEditingContent && contentDraft !== savedContent;
 
   const handleCreateText = () => {
     if (!subId) return;
@@ -273,11 +309,26 @@ export const SubCategoryView: React.FC = () => {
         <div className="flex items-center gap-2  "
         style={{fontFamily: isTibetan ? 'CustomTibetan' : ''}}
         >
-          <Button variant="outline" size="sm" onClick={() => handleEditCategory(subCategory)}>
-            <Edit className="h-4 w-4 mr-2" />
-            <span className="hidden md:block">{t('editSubcategory')}</span>
-          </Button>
-          {!isTantra && (
+          {isContentOnly && isEditingContent ? (
+            <>
+              <Button variant="outline" size="sm" onClick={handleCancelContentEdit}>
+                {t('cancel')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveContent}
+                disabled={!isContentDirty || updateSubCategoryMutation.isPending}
+              >
+                {t('saveChanges')}
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => handleEditCategory(subCategory)}>
+              <Edit className="h-4 w-4 mr-2" />
+              <span className="hidden md:block">{t('editSubcategory')}</span>
+            </Button>
+          )}
+          {!isContentOnly && (
             <Button onClick={handleCreateText}>
               <Plus className="mr-2 h-4 w-4" />
               <span className="hidden md:block">{t('createNewText')}</span>
@@ -287,7 +338,7 @@ export const SubCategoryView: React.FC = () => {
       </div>
 
       {/* Search */}
-      {!isTantra && (
+      {!isContentOnly && (
         <div className="flex items-center gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -302,13 +353,24 @@ export const SubCategoryView: React.FC = () => {
       )}
 
       {/* Content */}
-      {isTantra ? (
-        // For Tantra: Show content only
-        subCategory.only_content && subCategory.content && (
-          <Card className="p-6 bg-gray-50">
-            <p className="text-gray-700 whitespace-pre-wrap tibetan">{subCategory.content}</p>
-          </Card>
-        )
+      {isContentOnly ? (
+        // For Tantra / Scholarly Work: Show content only
+        <Card className="p-6 bg-gray-50">
+          {isEditingContent ? (
+            <Textarea
+              value={contentDraft}
+              onChange={(e) => setContentDraft(e.target.value)}
+              rows={16}
+              className={`min-h-[320px] whitespace-pre-wrap ${isTibetan ? 'tibetan' : ''}`}
+              style={{ fontFamily: isTibetan ? 'CustomTibetan' : undefined }}
+              placeholder={t('enterContentHere')}
+            />
+          ) : (
+            <p className="text-gray-700 whitespace-pre-wrap tibetan">
+              {subCategory.content || ''}
+            </p>
+          )}
+        </Card>
       ) : (
         // For Discourses: Show texts
         <div className="space-y-4 ">
