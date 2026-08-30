@@ -6,9 +6,11 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from "@/components/ui/atoms/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/atoms/tabs";
 import Breadcrumb from '@/components/ui/atoms/Breadcrumb';
+import { FootnoteText } from '@/components/ui/molecules/FootnoteText';
 import useLanguage from '@/hooks/useLanguage';
 import api from '@/utils/api';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
+import { Footnote, getFootnotes, repositionFootnote, resolveFootnotes, subscribeFootnotes } from '@/utils/footnotes';
 
 
 
@@ -155,6 +157,8 @@ const TextDetail = () => {
   const { isTibetan, t } = useLanguage();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [footnotesBySection, setFootnotesBySection] = useState<Record<string, Footnote[]>>({});
+  const [highlightedFootnoteId, setHighlightedFootnoteId] = useState<string | null>(null);
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -164,6 +168,25 @@ const TextDetail = () => {
     // Scroll only the inner reader pane - el.scrollIntoView() would also scroll the page itself.
     const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
     container.scrollTo({ top: offset, behavior: 'smooth' });
+  };
+
+  // Scroll to a specific footnote's occurrence in the text and open its note, wherever it is.
+  const goToFootnote = (footnoteId: string) => {
+    // Force the highlight effect to re-run even if the same footnote is picked twice in a row.
+    setHighlightedFootnoteId(null);
+    requestAnimationFrame(() => {
+      setHighlightedFootnoteId(footnoteId);
+      // Wait for the note popover to render before measuring scroll position.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const container = scrollContainerRef.current;
+          const el = container?.querySelector<HTMLElement>(`[data-footnote-ids~="${footnoteId}"]`);
+          if (!container || !el) return;
+          const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+          container.scrollTo({ top: offset - 24, behavior: 'smooth' });
+        });
+      });
+    });
   };
 
   // Fetch text data using React Query
@@ -258,18 +281,18 @@ const TextDetail = () => {
       }
 
       const sectionDefs = [
-        { id: 'translation-homage' as const, tib: response.translation_homage_tibetan, en: response.translation_homage_english },
-        { id: 'purpose' as const, tib: response.purpose_tibetan, en: response.purpose_english },
-        { id: 'summary' as const, tib: response.summary_text_tibetan, en: response.summary_text_english },
-        { id: 'word-meaning' as const, tib: response.word_meaning_tibetan, en: response.word_meaning_english },
-        { id: 'connection' as const, tib: response.connection_tibetan, en: response.connection_english },
-        { id: 'questions-answers' as const, tib: response.question_answers_tibetan, en: response.question_answers_english },
-        { id: 'colophon' as const, tib: response.colophon_tibetan, en: response.colophon_english },
+        { id: 'translation-homage' as const, tib: response.translation_homage_tibetan, en: response.translation_homage_english, tibField: 'translation_homage_tibetan', enField: 'translation_homage_english' },
+        { id: 'purpose' as const, tib: response.purpose_tibetan, en: response.purpose_english, tibField: 'purpose_tibetan', enField: 'purpose_english' },
+        { id: 'summary' as const, tib: response.summary_text_tibetan, en: response.summary_text_english, tibField: 'summary_text_tibetan', enField: 'summary_text_english' },
+        { id: 'word-meaning' as const, tib: response.word_meaning_tibetan, en: response.word_meaning_english, tibField: 'word_meaning_tibetan', enField: 'word_meaning_english' },
+        { id: 'connection' as const, tib: response.connection_tibetan, en: response.connection_english, tibField: 'connection_tibetan', enField: 'connection_english' },
+        { id: 'questions-answers' as const, tib: response.question_answers_tibetan, en: response.question_answers_english, tibField: 'question_answers_tibetan', enField: 'question_answers_english' },
+        { id: 'colophon' as const, tib: response.colophon_tibetan, en: response.colophon_english, tibField: 'colophon_tibetan', enField: 'colophon_english' },
       ];
       const sections = sectionDefs
-        .map(({ id, tib, en }) => {
+        .map(({ id, tib, en, tibField, enField }) => {
           const { text, scriptIsTibetan } = pickBilingualDisplay(isTibetan, tib, en);
-          return { id, content: text, scriptIsTibetan };
+          return { id, content: text, scriptIsTibetan, fieldKey: scriptIsTibetan ? tibField : enField };
         })
         .filter((section) => section.content);
       
@@ -277,6 +300,42 @@ const TextDetail = () => {
     },
     enabled: !!id && activeTab === 'summary',
     retry: 1,
+  });
+
+  // Load footnotes for every visible section, keyed by section id, and keep them in sync
+  // with localStorage (e.g. edited in another tab) so the sidebar list stays current.
+  useEffect(() => {
+    const sections = summaryData?.sections || [];
+    if (!id || sections.length === 0) {
+      setFootnotesBySection({});
+      return;
+    }
+    const load = () => {
+      const next: Record<string, Footnote[]> = {};
+      sections.forEach((section: any) => {
+        next[section.id] = getFootnotes(id, section.fieldKey);
+      });
+      setFootnotesBySection(next);
+    };
+    load();
+    return subscribeFootnotes(load);
+  }, [summaryData, id]);
+
+  // Flat, numbered list of every footnote across all sections, in reading order - backs the sidebar.
+  // Resolved against each section's live text so an edited-away anchor shows as orphaned instead
+  // of silently linking to a scroll target that no longer exists.
+  const allFootnotes = (summaryData?.sections || []).flatMap((section: any) => {
+    const sectionFootnotes = footnotesBySection[section.id] || [];
+    const resolved = resolveFootnotes(section.content, sectionFootnotes);
+    return sectionFootnotes.map((fn: Footnote) => ({
+      ...fn,
+      sectionId: section.id,
+      orphaned: resolved.find((r) => r.id === fn.id)?.orphaned ?? false,
+    }));
+  });
+  const footnoteIndexById: Record<string, number> = {};
+  allFootnotes.forEach((fn, i) => {
+    footnoteIndexById[fn.id] = i + 1;
   });
 
   // Metadata sits first in the reader, but the default focus is the first real text section -
@@ -483,6 +542,39 @@ const TextDetail = () => {
                                 </button>
                               ))}
                             </nav>
+
+                            {allFootnotes.length > 0 && (
+                              <div className="mt-6 pt-4 border-t border-border">
+                                <h4 className={cn("text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1", isTibetan && "tibetan")}>
+                                  {t('footnotes')}
+                                </h4>
+                                <div className="space-y-1">
+                                  {allFootnotes.map((fn, i) => (
+                                    <button
+                                      key={fn.id}
+                                      type="button"
+                                      onClick={() => !fn.orphaned && goToFootnote(fn.id)}
+                                      disabled={fn.orphaned}
+                                      title={fn.orphaned ? t('footnoteOrphaned') : undefined}
+                                      className={cn(
+                                        "w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors",
+                                        fn.orphaned
+                                          ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                                          : highlightedFootnoteId === fn.id
+                                            ? "bg-kangyur-orange/20 text-foreground"
+                                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                      )}
+                                    >
+                                      <span className="font-semibold text-kangyur-maroon mr-1">[{i + 1}]</span>
+                                      <span className={cn("truncate inline-block max-w-[80%] align-bottom", isTibetan && "tibetan", fn.orphaned && "line-through")}>
+                                        &ldquo;{fn.anchorText}&rdquo;
+                                      </span>
+                                      {fn.orphaned && <span className="ml-1 text-amber-600">⚠</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -520,14 +612,17 @@ const TextDetail = () => {
                                 >
                                   {t(sectionTitleMap[section.id as keyof typeof sectionTitleMap])}
                                 </h3>
-                                <div
+                                <FootnoteText
+                                  text={section.content}
+                                  footnotes={footnotesBySection[section.id] || []}
+                                  indexById={footnoteIndexById}
+                                  highlightId={highlightedFootnoteId}
+                                  onReposition={(fnId, start, end) => repositionFootnote(id!, section.fieldKey, fnId, start, end)}
                                   className={cn(
                                     'text-base sm:text-lg leading-relaxed text-foreground whitespace-pre-line break-words',
                                     section.scriptIsTibetan && 'tibetan'
                                   )}
-                                >
-                                  {section.content}
-                                </div>
+                                />
                               </div>
                             ))}
                           </div>

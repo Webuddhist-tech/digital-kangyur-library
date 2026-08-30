@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/atoms/card";
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
 import api from '@/utils/api';
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { FootnoteableTextarea } from '@/components/admin/texts/FootnoteableTextarea';
 import { cn } from '@/lib/utils';
 
 interface TextEditModalProps {
@@ -936,30 +936,29 @@ export const TextEditModal = ({
                                   </h3>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div className="space-y-2">
-                                      <Label htmlFor={`${currentSectionFields.tibetan}`}>
-                                        {t('tibetanContent')}
-                                      </Label>
-                                      <Textarea
+                                      <FootnoteableTextarea
                                         id={currentSectionFields.tibetan}
+                                        label={t('tibetanContent')}
                                         value={summaryFormData[currentSectionFields.tibetan] ?? ''}
-                                        onChange={(e) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.tibetan]: e.target.value })}
-                                        className={cn("font-tibetan resize-none", isTibetan && "tibetan")}
+                                        onChange={(val) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.tibetan]: val })}
+                                        className={cn("font-tibetan", isTibetan && "tibetan")}
                                         rows={currentSectionFields.rows}
+                                        textId={text?.id ? String(text.id) : undefined}
+                                        fieldKey={currentSectionFields.tibetan}
                                       />
                                     </div>
                                     <div className="space-y-2">
-                                      <Label htmlFor={`${currentSectionFields.english}`}>
-                                        {t('englishContent')}
-                                      </Label>
-                                      <Textarea
+                                      <FootnoteableTextarea
                                         id={currentSectionFields.english}
+                                        label={t('englishContent')}
                                         value={summaryFormData[currentSectionFields.english] ?? ''}
-                                        onChange={(e) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.english]: e.target.value })}
+                                        onChange={(val) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.english]: val })}
                                         rows={currentSectionFields.rows}
-                                        className="resize-none"
+                                        textId={text?.id ? String(text.id) : undefined}
+                                        fieldKey={currentSectionFields.english}
                                       />
                                     </div>
-                                
+
                                   </div>
                                 </div>
                               );
