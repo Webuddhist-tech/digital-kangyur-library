@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { StickyFooterShell } from '@/components/ui/molecules/Footer';
 import { useParams } from 'react-router-dom';
@@ -150,9 +150,21 @@ const MetadataSection = ({ title, group, metadata, t }: { title: string; group: 
 
 const TextDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeSection, setActiveSection] = useState<string>('translation-homage');
+  const [activeSection, setActiveSection] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('metadata');
   const { isTibetan, t } = useLanguage();
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollToSection = (sectionId: string) => {
+    setActiveSection(sectionId);
+    const container = scrollContainerRef.current;
+    const el = sectionRefs.current[sectionId];
+    if (!container || !el) return;
+    // Scroll only the inner reader pane - el.scrollIntoView() would also scroll the page itself.
+    const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+    container.scrollTo({ top: offset, behavior: 'smooth' });
+  };
 
   // Fetch text data using React Query
   const { data: textData, isLoading: loadingText, error: textError } = useQuery({
@@ -208,6 +220,8 @@ const TextDetail = () => {
     enabled: !!id,
     retry: 1,
   });
+
+  const hasMetadata = (textData?.metadata?.length || 0) > 0;
 
   // Fetch subcategory data when text data is loaded
   const { data: subCategoryData } = useQuery({
@@ -265,12 +279,55 @@ const TextDetail = () => {
     retry: 1,
   });
 
-  // Set active section when summary data loads
+  // Metadata sits first in the reader, but the default focus is the first real text section -
+  // only fall back to metadata when there's no text content at all.
+  const defaultSectionId = summaryData?.sections?.[0]?.id ?? (hasMetadata ? 'metadata' : '');
+  const currentSection = activeSection || defaultSectionId;
+
+  // Land the reader on the first real text section rather than sitting on metadata by default
   useEffect(() => {
-    if (summaryData?.sections && summaryData.sections.length > 0) {
-      setActiveSection(summaryData.sections[0].id);
+    if (activeSection || !defaultSectionId || defaultSectionId === 'metadata') return;
+    const container = scrollContainerRef.current;
+    const el = sectionRefs.current[defaultSectionId];
+    if (!container || !el) return;
+    const offset = el.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+    container.scrollTop = offset;
+  }, [defaultSectionId, activeTab]);
+
+  // Keep the sidebar highlight in sync with whichever section is scrolled into view
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const sectionIds = [
+      ...(hasMetadata ? ['metadata'] : []),
+      ...((summaryData?.sections || []).map((section: any) => section.id)),
+    ];
+    if (!container || sectionIds.length === 0) {
+      return;
     }
-  }, [summaryData]);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const topEntry = visible[0];
+        if (topEntry) {
+          const sectionId = topEntry.target.getAttribute('data-section-id');
+          if (sectionId) {
+            setActiveSection(sectionId);
+          }
+        }
+      },
+      { root: container, rootMargin: '0px 0px -70% 0px', threshold: 0 }
+    );
+
+    sectionIds.forEach((sectionId) => {
+      const el = sectionRefs.current[sectionId];
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [summaryData, hasMetadata]);
 
   const loading = loadingText || (activeTab === 'summary' && loadingSummary);
   
@@ -384,26 +441,40 @@ const TextDetail = () => {
                         <div className="text-lg">{t('loadingSummary')}</div>
                       </div>
                     )}
-                    {!loadingSummary && (!summaryData?.sections || summaryData.sections.length === 0) && (
+                    {!loadingSummary && (!summaryData?.sections || summaryData.sections.length === 0) && !hasMetadata && (
                       <div className="flex justify-center items-center py-12">
                         <div className="text-lg text-gray-500">{t('noSummaryAvailable')}</div>
                       </div>
                     )}
-                    {!loadingSummary && summaryData?.sections && summaryData.sections.length > 0 && (
-                      <div className="flex flex-col md:flex-row h-auto md:h-[70vh] overflow-scroll">
+                    {!loadingSummary && (hasMetadata || (summaryData?.sections && summaryData.sections.length > 0)) && (
+                      <div className="flex flex-col md:flex-row h-auto md:h-[70vh] overflow-hidden">
                         {/* Left Navigation Bar */}
-                        <div className="md:w-1/4 lg:w-1/5 border-b md:border-b-0 md:border-r border-border bg-muted/30 max-h-56 md:max-h-none md:h-full overflow-y-auto">
+                        <div className="md:w-1/4 lg:w-1/5 border-b md:border-b-0 md:border-r border-border bg-muted/30 max-h-56 md:max-h-none md:h-full overflow-y-auto shrink-0">
                           <div className="p-3 sm:p-4">
-                            
+
                             <nav className="space-y-2">
-                              {summaryData.sections.map((section: any) => (
+                              {hasMetadata && (
                                 <button
-                                  key={section.id}
-                                  onClick={() => setActiveSection(section.id)}
+                                  onClick={() => scrollToSection('metadata')}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg transition-colors text-xs sm:text-sm font-semibold capitalize",
                                     isTibetan && "tibetan",
-                                    activeSection === section.id
+                                    currentSection === 'metadata'
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  {t('metadata')}
+                                </button>
+                              )}
+                              {(summaryData?.sections || []).map((section: any) => (
+                                <button
+                                  key={section.id}
+                                  onClick={() => scrollToSection(section.id)}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg transition-colors text-xs sm:text-sm font-semibold capitalize",
+                                    isTibetan && "tibetan",
+                                    currentSection === section.id
                                       ? "bg-primary text-primary-foreground"
                                       : "hover:bg-muted text-muted-foreground hover:text-foreground"
                                   )}
@@ -415,31 +486,50 @@ const TextDetail = () => {
                           </div>
                         </div>
 
-                        {/* Right Text Reader */}
-                        <div className="flex-1 flex flex-col">
-                          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                            {summaryData.sections
-                              .filter((section: any) => section.id === activeSection)
-                              .map((section: any) => (
-                                <div key={section.id} className="space-y-4">
-                                  <h3
-                                    className={cn(
-                                      "text-lg sm:text-xl font-semibold text-kangyur-maroon mb-3 sm:mb-4 capitalize",
-                                      isTibetan && "tibetan"
-                                    )}
-                                  >
-                                    {t(sectionTitleMap[section.id as keyof typeof sectionTitleMap])}
-                                  </h3>
-                                  <div
-                                    className={cn(
-                                      'text-base sm:text-lg leading-relaxed text-foreground whitespace-pre-line break-words',
-                                      section.scriptIsTibetan && 'tibetan'
-                                    )}
-                                  >
-                                    {section.content}
-                                  </div>
+                        {/* Right Text Reader - metadata + all sections rendered continuously, scrolls independently of the page */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                          <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
+                            {hasMetadata && (
+                              <div
+                                ref={(el) => { sectionRefs.current['metadata'] = el; }}
+                                data-section-id="metadata"
+                                className="space-y-4 scroll-mt-4 pb-8 mb-8 border-b border-border"
+                              >
+                                <h3 className="text-lg sm:text-xl font-semibold text-kangyur-maroon mb-3 sm:mb-4 capitalize">
+                                  {t('metadata')}
+                                </h3>
+                                <div className="flex flex-col gap-8">
+                                  <MetadataSection title={t('titlesInMultipleLanguages')} group="titles" metadata={textData?.metadata || []} t={t} />
+                                  <MetadataSection title={t('catalogInformation')} group="catalog" metadata={textData?.metadata || []} t={t} />
+                                  <MetadataSection title={t('contentInformation')} group="content" metadata={textData?.metadata || []} t={t} />
                                 </div>
-                              ))}
+                              </div>
+                            )}
+                            {(summaryData?.sections || []).map((section: any) => (
+                              <div
+                                key={section.id}
+                                ref={(el) => { sectionRefs.current[section.id] = el; }}
+                                data-section-id={section.id}
+                                className="space-y-4 scroll-mt-4 pb-8 mb-8 border-b border-border last:border-b-0 last:mb-0 last:pb-0"
+                              >
+                                <h3
+                                  className={cn(
+                                    "text-lg sm:text-xl font-semibold text-kangyur-maroon mb-3 sm:mb-4 capitalize",
+                                    isTibetan && "tibetan"
+                                  )}
+                                >
+                                  {t(sectionTitleMap[section.id as keyof typeof sectionTitleMap])}
+                                </h3>
+                                <div
+                                  className={cn(
+                                    'text-base sm:text-lg leading-relaxed text-foreground whitespace-pre-line break-words',
+                                    section.scriptIsTibetan && 'tibetan'
+                                  )}
+                                >
+                                  {section.content}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
