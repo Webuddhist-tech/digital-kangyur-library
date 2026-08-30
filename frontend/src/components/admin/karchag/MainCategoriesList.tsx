@@ -150,8 +150,8 @@ export const MainCategoriesList: React.FC<MainCategoriesListProps> = ({
       {/* Header with Search and Create Button */}
       <div className="flex items-center flex-col md:flex-row justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800 py-[10px] tibetan ">{t('manageKarchagContent')}</h1>
-          <p className="text-gray-600 mt-1 tibetan ">{t('createEditManage')}</p>
+          <h1 className={`text-3xl font-bold text-gray-800 py-[10px] ${isTibetan ? 'tibetan' : 'english'}`}>{t('manageKarchagContent')}</h1>
+          <p className={`text-gray-600 mt-1 ${isTibetan ? 'tibetan' : 'english'}`}>{t('createEditManage')}</p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
@@ -198,7 +198,7 @@ export const MainCategoriesList: React.FC<MainCategoriesListProps> = ({
                    
                     
                     </div>
-                    <p className="text-sm font-medium text-kangyur-maroon tibetan mt-1">
+                    <p className="text-sm font-medium text-kangyur-maroon english mt-1">
                     {category.name_english}
                     </p>
                     <p className="text-sm text-gray-600 mt-2">{category.description_english}</p>

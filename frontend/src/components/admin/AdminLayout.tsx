@@ -28,7 +28,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="min-h-screen  bg-gradient-to-b from-kangyur-cream to-white relative overflow-hidden ">
+    <div className={cn("min-h-screen  bg-gradient-to-b from-kangyur-cream to-white relative overflow-hidden", isTibetan ? 'tibetan' : 'english')}>
       <div className='container'>
 
       <div className="absolute inset-0 z-0 overflow-hidden ">
@@ -61,7 +61,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                       </div>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 tibetan" align="end" forceMount>
+                  <DropdownMenuContent className={cn("w-56", isTibetan ? 'tibetan' : 'english')} align="end" forceMount>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">{user?.username || 'Admin User'}</p>

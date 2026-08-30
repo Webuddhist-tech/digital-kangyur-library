@@ -108,6 +108,10 @@
     @apply font-serif;
   }
 
+  .english {
+    @apply font-sans;
+  }
+
   .tibetan, .language-tibetan {
     @apply font-tibetan tracking-wide;
   }

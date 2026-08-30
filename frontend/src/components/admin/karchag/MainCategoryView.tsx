@@ -186,7 +186,7 @@ export const MainCategoryView: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-800 py-[10px] tibetan ">{currentLanguage === 'en' ? mainCategory.name_english : mainCategory.name_tibetan}</h1>
+          <h1 className={`text-3xl font-bold text-gray-800 py-[10px] ${currentLanguage === 'en' ? 'english' : 'tibetan'}`}>{currentLanguage === 'en' ? mainCategory.name_english : mainCategory.name_tibetan}</h1>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
@@ -226,7 +226,7 @@ export const MainCategoryView: React.FC = () => {
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
-                  <p className="text-sm font-medium text-kangyur-maroon tibetan mt-1">
+                  <p className="text-sm font-medium text-kangyur-maroon english mt-1">
                   {subCat.name_english}
                   </p>
                

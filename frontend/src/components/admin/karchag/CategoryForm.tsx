@@ -40,75 +40,50 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     return isContentOnlyCategory(mainCategory?.name_english);
   };
 
-  const [formData, setFormData] = useState(() => {
-    if (data) {
-      const mainCatId = data.main_category_id || null;
-      const isContentOnly = isContentOnlyMainCategory(mainCatId);
-      return {
-        name_english: data.name_english || '',
-        name_tibetan: data.name_tibetan || '',
-        description_english: data.description_english || '',
-        description_tibetan: data.description_tibetan || '',
-        order_index: data.order_index || 0,
-        is_active: data.is_active !== undefined ? data.is_active : true,
-        category_type: data.main_category_id ? 'sub' : 'main',
-        main_category_id: mainCatId,
-        only_content: isContentOnly,
-        content: data.content || ''
-      };
-    }
-    // If defaultMainCategoryId is provided, it means we're creating a subcategory
-    const isSubCategory = !!defaultMainCategoryId;
-    const isContentOnly = isContentOnlyMainCategory(defaultMainCategoryId || null);
-    return {
-      name_english: '',
-      name_tibetan: '',
-      description_english: '',
-      description_tibetan: '',
-      order_index: 0,
-      is_active: true,
-      category_type: isSubCategory ? 'sub' : 'main',
-      main_category_id: defaultMainCategoryId || null,
-      only_content: isContentOnly,
-      content: ''
-    };
+  const buildCreateFormData = (mainCategoryId: string | null) => ({
+    name_english: '',
+    name_tibetan: '',
+    description_english: '',
+    description_tibetan: '',
+    order_index: 0,
+    is_active: true,
+    category_type: mainCategoryId ? 'sub' : 'main',
+    main_category_id: mainCategoryId,
+    only_content: isContentOnlyMainCategory(mainCategoryId),
+    content: '',
   });
 
-  // Update formData when data or defaultMainCategoryId changes
+  const buildEditFormData = (source: any) => {
+    const mainCatId = source.main_category_id || null;
+    return {
+      name_english: source.name_english || '',
+      name_tibetan: source.name_tibetan || '',
+      description_english: source.description_english || '',
+      description_tibetan: source.description_tibetan || '',
+      order_index: source.order_index || 0,
+      is_active: source.is_active !== undefined ? source.is_active : true,
+      category_type: source.main_category_id ? 'sub' : 'main',
+      main_category_id: mainCatId,
+      only_content: isContentOnlyMainCategory(mainCatId),
+      content: source.content || '',
+    };
+  };
+
+  const [formData, setFormData] = useState(() =>
+    data && mode === 'edit'
+      ? buildEditFormData(data)
+      : buildCreateFormData(defaultMainCategoryId || null)
+  );
+
+  // Reset on open so consecutive creates do not keep the last submission.
   useEffect(() => {
-    if (data) {
-      const mainCatId = data.main_category_id || null;
-      const isContentOnly = isContentOnlyMainCategory(mainCatId);
-      setFormData({
-        name_english: data.name_english || '',
-        name_tibetan: data.name_tibetan || '',
-        description_english: data.description_english || '',
-        description_tibetan: data.description_tibetan || '',
-        order_index: data.order_index || 0,
-        is_active: data.is_active !== undefined ? data.is_active : true,
-        category_type: data.main_category_id ? 'sub' : 'main',
-        main_category_id: mainCatId,
-        only_content: isContentOnly,
-        content: data.content || ''
-      });
+    if (!isOpen) return;
+    if (data && mode === 'edit') {
+      setFormData(buildEditFormData(data));
     } else {
-      // If defaultMainCategoryId is provided, it means we're creating a subcategory
-      const isSubCategory = !!defaultMainCategoryId;
-      const isContentOnly = isContentOnlyMainCategory(defaultMainCategoryId || null);
-      setFormData({
-        name_english: '',
-        name_tibetan: '',
-        description_english: '',
-        description_tibetan: '',
-        order_index: 0,
-        is_active: true,
-        category_type: isSubCategory ? 'sub' : 'main',
-        main_category_id: defaultMainCategoryId || null,
-        only_content: isContentOnly,
-        content: ''
-      });
+      setFormData(buildCreateFormData(defaultMainCategoryId || null));
     }
-  }, [data, defaultMainCategoryId, mainCategories]);
+  }, [isOpen, data, defaultMainCategoryId, mode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

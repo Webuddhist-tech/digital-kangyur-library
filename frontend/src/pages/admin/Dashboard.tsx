@@ -3,9 +3,10 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Link } from 'react-router-dom';
 import { NewspaperIcon, FileText, Video, Users } from 'lucide-react';
 import useLanguage from '@/hooks/useLanguage';
+import { cn } from '@/lib/utils';
 
 const Dashboard = () => {
-  const { t } = useLanguage();
+  const { t, isTibetan } = useLanguage();
   
   const managementCards = [
     {
@@ -39,11 +40,11 @@ const Dashboard = () => {
     <AdminLayout>
       <div className="space-y-8">
         <div className="text-center py-2">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 pt-5 tibetan">{t('contentManagementBoard')}</h1>
-          <p className="text-gray-600 tibetan">{t('manageContentAcrossCategories')}</p>
+          <h1 className={cn("text-3xl font-bold text-gray-800 mb-2 pt-5", isTibetan ? 'tibetan' : 'english')}>{t('contentManagementBoard')}</h1>
+          <p className={cn("text-gray-600", isTibetan ? 'tibetan' : 'english')}>{t('manageContentAcrossCategories')}</p>
         </div>
         
-        <div className="grid max-w-6xl mx-auto grid-cols-1 md:grid-cols-2  gap-6 tibetan">
+        <div className={cn("grid max-w-6xl mx-auto grid-cols-1 md:grid-cols-2  gap-6", isTibetan ? 'tibetan' : 'english')}>
           {managementCards.map((card) => (
             <Link
               key={card.titleKey}

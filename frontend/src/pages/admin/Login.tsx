@@ -17,7 +17,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, isTibetan } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +58,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen tibetan bg-gradient-to-b from-kangyur-cream to-white flex items-center justify-center p-4">
+    <div className={`min-h-screen ${isTibetan ? 'tibetan' : 'english'} bg-gradient-to-b from-kangyur-cream to-white flex items-center justify-center p-4`}>
       <div className="absolute inset-0 z-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-kangyur-orange/5 blur-3xl"></div>
         <div className="absolute bottom-20 right-10 w-80 h-80 rounded-full bg-kangyur-green/5 blur-3xl"></div>
