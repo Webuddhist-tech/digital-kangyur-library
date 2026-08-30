@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/atoms/button';
 import { Input } from '@/components/ui/atoms/input';
 import { Label } from "@/components/ui/atoms/label";
 import { Textarea } from "@/components/ui/atoms/textarea";
-import { Switch } from "@/components/ui/atoms/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/atoms/radio-group";
 import {
   Dialog,
@@ -20,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/atoms/select";
 import { useLanguage } from '@/hooks/useLanguage';
+import { isContentOnlyCategory } from '@/utils/karchagCategory';
 
 interface CategoryFormProps {
   isOpen: boolean;
@@ -34,17 +34,16 @@ interface CategoryFormProps {
 export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defaultMainCategoryId, onSave }: CategoryFormProps) => {
   const { t ,isTibetan} = useLanguage();
   
-  // Helper function to determine if main category is Tantra
-  const isTantraCategory = (mainCategoryId: string | null): boolean => {
+  const isContentOnlyMainCategory = (mainCategoryId: string | null): boolean => {
     if (!mainCategoryId) return false;
     const mainCategory = mainCategories.find(mc => mc.id === mainCategoryId);
-    return mainCategory?.name_english?.toLowerCase() !== 'discource';
+    return isContentOnlyCategory(mainCategory?.name_english);
   };
 
   const [formData, setFormData] = useState(() => {
     if (data) {
       const mainCatId = data.main_category_id || null;
-      const isTantra = isTantraCategory(mainCatId);
+      const isContentOnly = isContentOnlyMainCategory(mainCatId);
       return {
         name_english: data.name_english || '',
         name_tibetan: data.name_tibetan || '',
@@ -54,13 +53,13 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
         is_active: data.is_active !== undefined ? data.is_active : true,
         category_type: data.main_category_id ? 'sub' : 'main',
         main_category_id: mainCatId,
-        only_content: isTantra, // Auto-set based on Tantra
+        only_content: isContentOnly,
         content: data.content || ''
       };
     }
     // If defaultMainCategoryId is provided, it means we're creating a subcategory
     const isSubCategory = !!defaultMainCategoryId;
-    const isTantra = isTantraCategory(defaultMainCategoryId || null);
+    const isContentOnly = isContentOnlyMainCategory(defaultMainCategoryId || null);
     return {
       name_english: '',
       name_tibetan: '',
@@ -70,7 +69,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
       is_active: true,
       category_type: isSubCategory ? 'sub' : 'main',
       main_category_id: defaultMainCategoryId || null,
-      only_content: isTantra, // Auto-set based on Tantra
+      only_content: isContentOnly,
       content: ''
     };
   });
@@ -79,7 +78,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
   useEffect(() => {
     if (data) {
       const mainCatId = data.main_category_id || null;
-      const isTantra = isTantraCategory(mainCatId);
+      const isContentOnly = isContentOnlyMainCategory(mainCatId);
       setFormData({
         name_english: data.name_english || '',
         name_tibetan: data.name_tibetan || '',
@@ -89,13 +88,13 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
         is_active: data.is_active !== undefined ? data.is_active : true,
         category_type: data.main_category_id ? 'sub' : 'main',
         main_category_id: mainCatId,
-        only_content: isTantra, // Auto-set based on Tantra
+        only_content: isContentOnly,
         content: data.content || ''
       });
     } else {
       // If defaultMainCategoryId is provided, it means we're creating a subcategory
       const isSubCategory = !!defaultMainCategoryId;
-      const isTantra = isTantraCategory(defaultMainCategoryId || null);
+      const isContentOnly = isContentOnlyMainCategory(defaultMainCategoryId || null);
       setFormData({
         name_english: '',
         name_tibetan: '',
@@ -105,7 +104,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
         is_active: true,
         category_type: isSubCategory ? 'sub' : 'main',
         main_category_id: defaultMainCategoryId || null,
-        only_content: isTantra, // Auto-set based on Tantra
+        only_content: isContentOnly,
         content: ''
       });
     }
@@ -115,6 +114,9 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     e.preventDefault();
     onSave(formData);
   };
+
+  const showDisplayOrder =
+    formData.category_type === 'sub' && isContentOnlyMainCategory(formData.main_category_id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} >
@@ -150,11 +152,11 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
               <Select
                 value={formData.main_category_id?.toString() || ''}
                 onValueChange={(value) => {
-                  const isTantra = isTantraCategory(value);
+                  const isContentOnly = isContentOnlyMainCategory(value);
                   setFormData({ 
                     ...formData, 
                     main_category_id: value,
-                    only_content: isTantra // Auto-update only_content when main category changes
+                    only_content: isContentOnly
                   });
                 }}
                 required
@@ -225,31 +227,23 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
            
           </div>
 
-          {/* Order and Status */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* <div className="space-y-2">
-              <Label htmlFor="order_index">{t('orderIndex')} </Label>
+          {/* Display order for Tantra / Scholarly Work subcategories */}
+          {showDisplayOrder && (
+            <div className="space-y-2">
+              <Label htmlFor="order_index">{t('displayOrder')} </Label>
               <Input
                 id="order_index"
                 type="number"
                 value={formData.order_index}
                 onChange={(e) => setFormData({ ...formData, order_index: Number.parseInt(e.target.value, 10) || 0 })}
               />
-            </div> */}
-            {/* <div className="flex items-center space-x-2">
-              <Switch
-                id="is_active"
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-              />
-              <Label htmlFor="is_active">{t('active')}</Label>
-            </div> */}
-          </div>
+            </div>
+          )}
 
-          {/* Content Field (only for sub categories, automatically shown for Tantra) */}
+          {/* Content Field (only for sub categories, automatically shown for content-only categories) */}
           {formData.category_type === 'sub' && formData.only_content && (
             <div className="space-y-2">
-              <Label htmlFor="content">{t('content')} {isTantraCategory(formData.main_category_id) ? '(Tantra subcategory)' : ''}</Label>
+              <Label htmlFor="content">{t('content')}</Label>
               <Textarea
                 id="content"
                 value={formData.content}

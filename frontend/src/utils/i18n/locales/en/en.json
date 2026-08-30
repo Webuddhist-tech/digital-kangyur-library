@@ -169,6 +169,7 @@
     "englishDescription": "English Description",
     "tibetanDescription": "Tibetan Description",
     "orderIndex": "Order Index",
+    "displayOrder": "Display order",
     "cancel": "Cancel",
     "createCategory": "Create Category",
     "saveChanges": "Save Changes",

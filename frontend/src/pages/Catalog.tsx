@@ -435,7 +435,9 @@ const Catalog = () => {
           
           {karchagSubCategoriesData && karchagSubCategoriesData.length > 0 ? (
             <div className="flex flex-col md:flex-row justify-center gap-10 md:gap-24 flex-wrap">
-              {karchagSubCategoriesData.map((subcategory: any) => (
+              {[...karchagSubCategoriesData]
+                .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+                .map((subcategory: any) => (
                 <KarchagFrame
                   key={subcategory.id}
                   label={{
