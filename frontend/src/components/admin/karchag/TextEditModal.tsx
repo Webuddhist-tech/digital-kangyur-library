@@ -588,6 +588,26 @@ export const TextEditModal = ({
                         </div>
                       </div>
 
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="derge_id">{t('dergeId')} <span className="text-red-600">*</span></Label>
+                          <Input
+                            id="derge_id"
+                            value={formData.derge_id}
+                            onChange={(e) => setFormData({ ...formData, derge_id: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="yeshe_de_id">{t('yesheDeId')} </Label>
+                          <Input
+                            id="yeshe_de_id"
+                            value={formData.yeshe_de_id}
+                            onChange={(e) => setFormData({ ...formData, yeshe_de_id: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="chapter_number">{t('chapter')}</Label>
@@ -657,26 +677,6 @@ export const TextEditModal = ({
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="derge_id">{t('dergeId')} <span className="text-red-600">*</span></Label>
-                          <Input
-                            id="derge_id"
-                            value={formData.derge_id}
-                            onChange={(e) => setFormData({ ...formData, derge_id: e.target.value })}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="yeshe_de_id">{t('yesheDeId')} </Label>
-                          <Input
-                            id="yeshe_de_id"
-                            value={formData.yeshe_de_id}
-                            onChange={(e) => setFormData({ ...formData, yeshe_de_id: e.target.value })}
-                          />
                         </div>
                       </div>
 
