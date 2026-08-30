@@ -174,11 +174,11 @@ const TextDetail = () => {
         { key: 'english-title', value: response.english_title?.trim() || '', group: 'titles' },
         { key: 'alternative-title', value: response.alternative_title?.trim() || '', group: 'titles' },
         // Catalog information
+        { key: 'pedurma-volume-number', value: response.pedurma_volume_number?.trim() || '', group: 'catalog' },
         { key: 'derge-id', value: response.derge_id?.trim() || '', group: 'catalog' },
         { key: 'yeshe-de-id', value: response.yeshe_de_id?.trim() || '', group: 'catalog' },
         { key: 'yeshe-de-volume', value: response.yeshe_de_volume_number?.trim() || '', group: 'catalog' },
         { key: 'yeshe-de-volume-length', value: response.yeshe_de_volume_length?.trim() || '', group: 'catalog' },
-        { key: 'pedurma-volume-number', value: response.pedurma_volume_number?.trim() || '', group: 'catalog' },
         { key: 'chapter-number', value: response.chapter_number?.toString() || '', group: 'catalog' },
         { key: 'bampo-number', value: response.bampo_number?.toString() || '', group: 'catalog' },
         { key: 'page-count', value: response.page_count?.toString() || '', group: 'catalog' },
