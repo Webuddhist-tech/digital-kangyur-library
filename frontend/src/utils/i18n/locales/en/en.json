@@ -133,6 +133,7 @@
     "categoryNotFound": "Category not found.",
     "editSubcategory": "Edit Subcategory",
     "content": "Content",
+    "contentOnlySubcategory": "Content-only subcategory (shows a single passage instead of a list of texts)",
     "dergeId": "Derge ID",
     "yesheDeId": "Yeshe De ID",
     "englishTitle": "English Title",

@@ -58,7 +58,7 @@ export const FootnoteableTextarea = ({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const overlayInnerRef = useRef<HTMLDivElement | null>(null);
   const [footnotes, setFootnotes] = useState<Footnote[]>([]);
-  const [draft, setDraft] = useState<{ start: number; end: number; anchorText: string; note: string } | null>(null);
+  const [draft, setDraft] = useState<{ start: number; end: number; anchorText: string; note: string; top: number; left: number } | null>(null);
   const [editPopover, setEditPopover] = useState<EditPopoverState | null>(null);
   const [editingNote, setEditingNote] = useState('');
 
@@ -114,6 +114,44 @@ export const FootnoteableTextarea = ({
     };
   }, [editPopover]);
 
+  /** Finds where a slice of the textarea's text actually renders on screen. A textarea has no
+   *  native API for this (unlike a real DOM selection/Range), so this plants a marker span in a
+   *  throwaway clone of the highlight overlay above - same classes, so same font/padding/wrapping
+   *  as the real textarea by construction - and measures the marker instead of hand-copying styles. */
+  const measureTextRect = (start: number, end: number): { top: number; left: number } | null => {
+    const el = textareaRef.current;
+    const wrapper = wrapperRef.current;
+    if (!el || !wrapper) return null;
+
+    const mirror = document.createElement('div');
+    mirror.className = cn(
+      'pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words rounded-md border border-transparent px-3 py-2 text-sm',
+      className
+    );
+    mirror.style.visibility = 'hidden';
+
+    mirror.appendChild(document.createTextNode(value.slice(0, start)));
+    const marker = document.createElement('span');
+    marker.textContent = value.slice(start, end);
+    mirror.appendChild(marker);
+    mirror.appendChild(document.createTextNode(value.slice(end)));
+
+    wrapper.appendChild(mirror);
+    const rects = marker.getClientRects();
+    // Last fragment = where the selection ends, so the popover anchors below it rather than on top of it.
+    const lastRect = rects[rects.length - 1] ?? marker.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    wrapper.removeChild(mirror);
+
+    return {
+      top: Math.max(lastRect.bottom - wrapperRect.top - el.scrollTop + 4, 0),
+      left: Math.min(
+        Math.max(lastRect.left - wrapperRect.left, 0),
+        Math.max(wrapperRect.width - 260, 0)
+      ),
+    };
+  };
+
   const handleAddFootnote = () => {
     const el = textareaRef.current;
     if (!el || !textId) return;
@@ -124,7 +162,8 @@ export const FootnoteableTextarea = ({
       return;
     }
     setEditPopover(null);
-    setDraft({ start, end, anchorText: value.slice(start, end), note: '' });
+    const anchor = measureTextRect(start, end) ?? { top: 4, left: 4 };
+    setDraft({ start, end, anchorText: value.slice(start, end), note: '', top: anchor.top, left: anchor.left });
   };
 
   const saveDraft = () => {
@@ -222,7 +261,10 @@ export const FootnoteableTextarea = ({
         />
 
         {draft && (
-          <div className="absolute right-1 top-1 z-20 w-64 max-w-[90%] space-y-2 rounded-md border border-kangyur-orange/30 bg-popover p-3 text-popover-foreground shadow-lg">
+          <div
+            className="absolute z-20 w-64 max-w-[90%] space-y-2 rounded-md border border-kangyur-orange/30 bg-popover p-3 text-popover-foreground shadow-lg"
+            style={{ top: draft.top, left: draft.left }}
+          >
             <div className="flex items-start justify-between gap-2">
               <p className={cn("text-xs text-muted-foreground", isTibetan && "tibetan")}>
                 {t('footnoteFor')}: <span className="font-medium text-foreground">&ldquo;{draft.anchorText}&rdquo;</span>

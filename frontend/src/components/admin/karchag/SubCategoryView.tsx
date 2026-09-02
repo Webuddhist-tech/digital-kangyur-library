@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/atoms/button';
 import { Input } from '@/components/ui/atoms/input';
-import { Textarea } from '@/components/ui/atoms/textarea';
 import { Card } from '@/components/ui/atoms/card';
 import { Edit, Search, Plus } from 'lucide-react';
 import api from '@/utils/api';
@@ -12,8 +11,10 @@ import Breadcrumb from '@/components/ui/atoms/Breadcrumb';
 import { CategoryForm } from './CategoryForm';
 import { TextCard } from './TextCard';
 import { TextEditModal } from './TextEditModal';
+import { FootnoteableTextarea } from '@/components/admin/texts/FootnoteableTextarea';
+import { FootnoteText } from '@/components/ui/molecules/FootnoteText';
 import { useLanguage } from '@/hooks/useLanguage';
-import { isContentOnlyCategory } from '@/utils/karchagCategory';
+import { Footnote, getFootnotes, repositionFootnote, subscribeFootnotes } from '@/utils/footnotes';
 
 function newTextDraft(subCategoryId: string) {
   return {
@@ -138,7 +139,18 @@ export const SubCategoryView: React.FC = () => {
   const subCategories = subCategoriesData || [];
   const isLoading = isLoadingSub || isLoadingTexts;
 
-  const isContentOnly = isContentOnlyCategory(mainCategory?.name_english);
+  const isContentOnly = !!subCategory?.only_content;
+
+  const [contentFootnotes, setContentFootnotes] = useState<Footnote[]>([]);
+  useEffect(() => {
+    if (!subCategory?.id) {
+      setContentFootnotes([]);
+      return;
+    }
+    const load = () => setContentFootnotes(getFootnotes(subCategory.id, 'content'));
+    load();
+    return subscribeFootnotes(load);
+  }, [subCategory?.id]);
 
   const updateSubCategoryMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => api.updateKarchagSubCategory(id, data),
@@ -354,21 +366,26 @@ export const SubCategoryView: React.FC = () => {
 
       {/* Content */}
       {isContentOnly ? (
-        // For Tantra / Scholarly Work: Show content only
+        // Content-only subcategory: show a single passage instead of a text list
         <Card className="p-6 bg-gray-50">
           {isEditingContent ? (
-            <Textarea
+            <FootnoteableTextarea
+              id="sub-category-content"
+              label={t('content')}
               value={contentDraft}
-              onChange={(e) => setContentDraft(e.target.value)}
+              onChange={setContentDraft}
               rows={16}
               className={`min-h-[320px] whitespace-pre-wrap ${isTibetan ? 'tibetan' : ''}`}
-              style={{ fontFamily: isTibetan ? 'CustomTibetan' : undefined }}
-              placeholder={t('enterContentHere')}
+              textId={subCategory.id}
+              fieldKey="content"
             />
           ) : (
-            <p className="text-gray-700 whitespace-pre-wrap tibetan">
-              {subCategory.content || ''}
-            </p>
+            <FootnoteText
+              text={subCategory.content || ''}
+              footnotes={contentFootnotes}
+              className="text-gray-700 whitespace-pre-wrap tibetan"
+              onReposition={(id, start, end) => repositionFootnote(subCategory.id, 'content', id, start, end)}
+            />
           )}
         </Card>
       ) : (

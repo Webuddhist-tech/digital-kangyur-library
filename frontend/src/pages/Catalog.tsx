@@ -13,6 +13,8 @@ import api from '@/utils/api';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
 import KarchagSearch from '@/components/catalog/KarchagSearch';
 import { Input } from '@/components/ui/atoms/input';
+import { FootnoteText } from '@/components/ui/molecules/FootnoteText';
+import { Footnote, getFootnotes, repositionFootnote, subscribeFootnotes } from '@/utils/footnotes';
 
 const Catalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -66,6 +68,18 @@ const Catalog = () => {
     },
     enabled: !!selectedItem,
   });
+
+  // Load footnotes for the selected subcategory's content, kept in sync with the admin editor.
+  const [contentFootnotes, setContentFootnotes] = useState<Footnote[]>([]);
+  useEffect(() => {
+    if (!selectedSubCategory?.id || !selectedSubCategory?.content) {
+      setContentFootnotes([]);
+      return;
+    }
+    const load = () => setContentFootnotes(getFootnotes(selectedSubCategory.id, 'content'));
+    load();
+    return subscribeFootnotes(load);
+  }, [selectedSubCategory?.id, selectedSubCategory?.content]);
 
   // Fetch texts for the selected subcategory if it doesn't have content
   const { data: subCategoryTextsData = [], isLoading: loadingTexts } = useQuery({
@@ -530,9 +544,12 @@ const Catalog = () => {
                 return (
                   <div className="max-w-4xl mx-auto min-h-[60vh] mt-12">
                     <div className="prose prose-lg max-w-none ">
-                      <div className={`whitespace-pre-line ${isTibetan ? 'tibetan text-lg leading-relaxed' : 'text-gray-700'}`}>
-                        {selectedSubCategory.content}
-                      </div>
+                      <FootnoteText
+                        text={selectedSubCategory.content}
+                        footnotes={contentFootnotes}
+                        className={`whitespace-pre-line ${isTibetan ? 'tibetan text-lg leading-relaxed' : 'text-gray-700'}`}
+                        onReposition={(id, start, end) => repositionFootnote(selectedSubCategory.id, 'content', id, start, end)}
+                      />
                     </div>
                   </div>
                 );

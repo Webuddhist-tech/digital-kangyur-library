@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/atoms/input';
 import { Label } from "@/components/ui/atoms/label";
 import { Textarea } from "@/components/ui/atoms/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/atoms/radio-group";
+import { Switch } from "@/components/ui/atoms/switch";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/atoms/select";
 import { useLanguage } from '@/hooks/useLanguage';
-import { isContentOnlyCategory } from '@/utils/karchagCategory';
+import { FootnoteableTextarea } from '@/components/admin/texts/FootnoteableTextarea';
 
 interface CategoryFormProps {
   isOpen: boolean;
@@ -33,12 +34,6 @@ interface CategoryFormProps {
 
 export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defaultMainCategoryId, onSave }: CategoryFormProps) => {
   const { t ,isTibetan} = useLanguage();
-  
-  const isContentOnlyMainCategory = (mainCategoryId: string | null): boolean => {
-    if (!mainCategoryId) return false;
-    const mainCategory = mainCategories.find(mc => mc.id === mainCategoryId);
-    return isContentOnlyCategory(mainCategory?.name_english);
-  };
 
   const buildCreateFormData = (mainCategoryId: string | null) => ({
     name_english: '',
@@ -49,7 +44,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     is_active: true,
     category_type: mainCategoryId ? 'sub' : 'main',
     main_category_id: mainCategoryId,
-    only_content: isContentOnlyMainCategory(mainCategoryId),
+    only_content: false,
     content: '',
   });
 
@@ -64,7 +59,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
       is_active: source.is_active !== undefined ? source.is_active : true,
       category_type: source.main_category_id ? 'sub' : 'main',
       main_category_id: mainCatId,
-      only_content: isContentOnlyMainCategory(mainCatId),
+      only_content: !!source.only_content,
       content: source.content || '',
     };
   };
@@ -90,8 +85,8 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     onSave(formData);
   };
 
-  const showDisplayOrder =
-    formData.category_type === 'sub' && isContentOnlyMainCategory(formData.main_category_id);
+  const showDisplayOrder = formData.category_type === 'sub' && formData.only_content;
+  const subCategoryId = mode === 'edit' ? data?.id : undefined;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} >
@@ -127,11 +122,9 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
               <Select
                 value={formData.main_category_id?.toString() || ''}
                 onValueChange={(value) => {
-                  const isContentOnly = isContentOnlyMainCategory(value);
-                  setFormData({ 
-                    ...formData, 
+                  setFormData({
+                    ...formData,
                     main_category_id: value,
-                    only_content: isContentOnly
                   });
                 }}
                 required
@@ -202,7 +195,21 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
            
           </div>
 
-          {/* Display order for Tantra / Scholarly Work subcategories */}
+          {/* Content-only toggle: a content-only subcategory shows a single passage instead of a text list */}
+          {formData.category_type === 'sub' && (
+            <div className="flex items-center gap-3">
+              <Switch
+                id="only_content"
+                checked={formData.only_content}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, only_content: checked, content: checked ? formData.content : '' })
+                }
+              />
+              <Label htmlFor="only_content">{t('contentOnlySubcategory')}</Label>
+            </div>
+          )}
+
+          {/* Display order for content-only subcategories */}
           {showDisplayOrder && (
             <div className="space-y-2">
               <Label htmlFor="order_index">{t('displayOrder')} </Label>
@@ -215,18 +222,18 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
             </div>
           )}
 
-          {/* Content Field (only for sub categories, automatically shown for content-only categories) */}
+          {/* Content field (only for content-only sub categories) */}
           {formData.category_type === 'sub' && formData.only_content && (
-            <div className="space-y-2">
-              <Label htmlFor="content">{t('content')}</Label>
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                rows={10}
-                placeholder="Enter content here..."
-              />
-            </div>
+            <FootnoteableTextarea
+              id="content"
+              label={t('content')}
+              value={formData.content}
+              onChange={(value) => setFormData({ ...formData, content: value })}
+              rows={10}
+              className={isTibetan ? 'tibetan' : undefined}
+              textId={subCategoryId}
+              fieldKey="content"
+            />
           )}
 
           <DialogFooter>
