@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Footnote, resolveFootnotes } from '@/utils/footnotes';
+import { Footnote, FootnoteSegment, buildFootnoteSegments, resolveFootnotes } from '@/utils/footnotes';
 
 interface FootnoteTextProps {
   text: string;
@@ -14,36 +14,6 @@ interface FootnoteTextProps {
   onReposition?: (id: string, start: number, end: number) => void;
 }
 
-interface Segment {
-  content: string;
-  /** All footnotes covering this exact slice of text - can be >1 when footnotes overlap. */
-  footnoteIds: string[];
-}
-
-/** Splits text into segments using every footnote start/end as a cut point, so overlapping
- *  footnotes each keep their own coverage instead of the later one being dropped. */
-function buildSegments(text: string, footnotes: Footnote[]): Segment[] {
-  const valid = footnotes.filter((f) => f.start >= 0 && f.end <= text.length && f.start < f.end);
-  if (valid.length === 0) return [{ content: text, footnoteIds: [] }];
-
-  const points = new Set<number>([0, text.length]);
-  valid.forEach((f) => {
-    points.add(f.start);
-    points.add(f.end);
-  });
-  const sorted = Array.from(points).sort((a, b) => a - b);
-
-  const segments: Segment[] = [];
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const segStart = sorted[i];
-    const segEnd = sorted[i + 1];
-    if (segStart === segEnd) continue;
-    const footnoteIds = valid.filter((f) => f.start <= segStart && f.end >= segEnd).map((f) => f.id);
-    segments.push({ content: text.slice(segStart, segEnd), footnoteIds });
-  }
-  return segments;
-}
-
 export const FootnoteText = ({ text, footnotes, className, indexById, highlightId, onReposition }: FootnoteTextProps) => {
   // The set of footnote ids currently "selected" - every segment touching any of these ids
   // lights up together, so a footnote split by an overlapping neighbour still reads as one span.
@@ -55,7 +25,7 @@ export const FootnoteText = ({ text, footnotes, className, indexById, highlightI
   // them blindly; an orphaned footnote (its phrase no longer appears at all) is dropped from
   // rendering instead of highlighting an unrelated span.
   const resolved = resolveFootnotes(text, footnotes).filter((f) => !f.orphaned);
-  const segments = buildSegments(text, resolved);
+  const segments = buildFootnoteSegments(text, resolved);
   const footnotesById = new Map(resolved.map((f) => [f.id, f]));
 
   useEffect(() => {

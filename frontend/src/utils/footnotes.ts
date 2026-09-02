@@ -132,6 +132,38 @@ export function resolveFootnotes(text: string, footnotes: Footnote[]): ResolvedF
   });
 }
 
+export interface FootnoteSegment {
+  content: string;
+  /** All footnotes covering this exact slice of text - can be >1 when footnotes overlap. */
+  footnoteIds: string[];
+}
+
+/** Splits text into segments using every footnote start/end as a cut point, so overlapping
+ *  footnotes each keep their own coverage instead of the later one being dropped. Shared by
+ *  the public reader (FootnoteText) and the admin editor's inline highlight overlay so both
+ *  render identical spans from the same offsets. */
+export function buildFootnoteSegments(text: string, footnotes: Footnote[]): FootnoteSegment[] {
+  const valid = footnotes.filter((f) => f.start >= 0 && f.end <= text.length && f.start < f.end);
+  if (valid.length === 0) return [{ content: text, footnoteIds: [] }];
+
+  const points = new Set<number>([0, text.length]);
+  valid.forEach((f) => {
+    points.add(f.start);
+    points.add(f.end);
+  });
+  const sorted = Array.from(points).sort((a, b) => a - b);
+
+  const segments: FootnoteSegment[] = [];
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const segStart = sorted[i];
+    const segEnd = sorted[i + 1];
+    if (segStart === segEnd) continue;
+    const footnoteIds = valid.filter((f) => f.start <= segStart && f.end >= segEnd).map((f) => f.id);
+    segments.push({ content: text.slice(segStart, segEnd), footnoteIds });
+  }
+  return segments;
+}
+
 /** Notifies on any footnote change, including from other tabs (storage event). */
 export function subscribeFootnotes(callback: () => void): () => void {
   window.addEventListener(CHANGE_EVENT, callback);

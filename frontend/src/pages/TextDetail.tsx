@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { StickyFooterShell } from '@/components/ui/molecules/Footer';
 import { useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { PanelRightClose, PanelRightOpen, X } from 'lucide-react';
 import { Card, CardContent } from "@/components/ui/atoms/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/atoms/tabs";
 import Breadcrumb from '@/components/ui/atoms/Breadcrumb';
@@ -159,6 +160,7 @@ const TextDetail = () => {
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [footnotesBySection, setFootnotesBySection] = useState<Record<string, Footnote[]>>({});
   const [highlightedFootnoteId, setHighlightedFootnoteId] = useState<string | null>(null);
+  const [footnotesPanelOpen, setFootnotesPanelOpen] = useState(false);
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -542,44 +544,27 @@ const TextDetail = () => {
                                 </button>
                               ))}
                             </nav>
-
-                            {allFootnotes.length > 0 && (
-                              <div className="mt-6 pt-4 border-t border-border">
-                                <h4 className={cn("text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 px-1", isTibetan && "tibetan")}>
-                                  {t('footnotes')}
-                                </h4>
-                                <div className="space-y-1">
-                                  {allFootnotes.map((fn, i) => (
-                                    <button
-                                      key={fn.id}
-                                      type="button"
-                                      onClick={() => !fn.orphaned && goToFootnote(fn.id)}
-                                      disabled={fn.orphaned}
-                                      title={fn.orphaned ? t('footnoteOrphaned') : undefined}
-                                      className={cn(
-                                        "w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors",
-                                        fn.orphaned
-                                          ? "opacity-50 cursor-not-allowed text-muted-foreground"
-                                          : highlightedFootnoteId === fn.id
-                                            ? "bg-kangyur-orange/20 text-foreground"
-                                            : "hover:bg-muted text-muted-foreground hover:text-foreground"
-                                      )}
-                                    >
-                                      <span className="font-semibold text-kangyur-maroon mr-1">[{i + 1}]</span>
-                                      <span className={cn("truncate inline-block max-w-[80%] align-bottom", isTibetan && "tibetan", fn.orphaned && "line-through")}>
-                                        &ldquo;{fn.anchorText}&rdquo;
-                                      </span>
-                                      {fn.orphaned && <span className="ml-1 text-amber-600">⚠</span>}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
 
                         {/* Right Text Reader - metadata + all sections rendered continuously, scrolls independently of the page */}
-                        <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 flex flex-col min-h-0 relative">
+                          {allFootnotes.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setFootnotesPanelOpen((open) => !open)}
+                              className={cn(
+                                "absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs font-semibold shadow-sm transition-colors",
+                                footnotesPanelOpen
+                                  ? "border-kangyur-orange/40 text-kangyur-orange"
+                                  : "text-muted-foreground hover:text-foreground"
+                              )}
+                              title={footnotesPanelOpen ? t('closeFootnotes') : t('footnotes')}
+                            >
+                              {footnotesPanelOpen ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+                              <span className={cn(isTibetan && "tibetan")}>{t('footnotesCount', { count: allFootnotes.length })}</span>
+                            </button>
+                          )}
                           <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6">
                             {hasMetadata && (
                               <div
@@ -627,6 +612,50 @@ const TextDetail = () => {
                             ))}
                           </div>
                         </div>
+
+                        {/* Right Footnotes Panel - opened/closed via the toggle button above the reader */}
+                        {footnotesPanelOpen && allFootnotes.length > 0 && (
+                          <div className="md:w-72 lg:w-80 border-t md:border-t-0 md:border-l border-border bg-muted/30 flex flex-col shrink-0 max-h-56 md:max-h-none">
+                            <div className="flex items-center justify-between gap-2 p-3 sm:p-4 border-b border-border">
+                              <h4 className={cn("text-xs font-semibold uppercase tracking-wide text-muted-foreground", isTibetan && "tibetan")}>
+                                {t('footnotes')}
+                              </h4>
+                              <button
+                                type="button"
+                                onClick={() => setFootnotesPanelOpen(false)}
+                                className="text-muted-foreground hover:text-foreground"
+                                title={t('closeFootnotes')}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
+                              {allFootnotes.map((fn, i) => (
+                                <button
+                                  key={fn.id}
+                                  type="button"
+                                  onClick={() => !fn.orphaned && goToFootnote(fn.id)}
+                                  disabled={fn.orphaned}
+                                  title={fn.orphaned ? t('footnoteOrphaned') : undefined}
+                                  className={cn(
+                                    "w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors",
+                                    fn.orphaned
+                                      ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                                      : highlightedFootnoteId === fn.id
+                                        ? "bg-kangyur-orange/20 text-foreground"
+                                        : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                                  )}
+                                >
+                                  <span className="font-semibold text-kangyur-maroon mr-1">[{i + 1}]</span>
+                                  <span className={cn("truncate inline-block max-w-[80%] align-bottom", isTibetan && "tibetan", fn.orphaned && "line-through")}>
+                                    &ldquo;{fn.anchorText}&rdquo;
+                                  </span>
+                                  {fn.orphaned && <span className="ml-1 text-amber-600">⚠</span>}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </TabsContent>
