@@ -29,6 +29,40 @@ const ALLOWED_ATTR = [
   'data-list', 'data-indent', 'data-align',
 ];
 
+/**
+ * The only CSS properties the editor's toolbar produces, via the style
+ * attributors registered in `RichTextEditor`. Allowing the `style` attribute
+ * without narrowing it to these would let arbitrary declarations - `url(...)`,
+ * `expression(...)`, `position: fixed` overlays - ride along in stored content,
+ * and DOMPurify only filters CSS values when the host exposes a CSS parser.
+ */
+const ALLOWED_STYLE_PROPS = new Set([
+  'text-align', 'direction', 'color', 'background-color', 'font-family', 'font-size',
+]);
+
+const UNSAFE_CSS_VALUE = /url\s*\(|expression\s*\(|javascript:|@import|behaviou?r\s*:|\\/i;
+
+let styleHookRegistered = false;
+function registerStyleFilter() {
+  if (styleHookRegistered) return;
+  styleHookRegistered = true;
+  DOMPurify.addHook('afterSanitizeAttributes', (node: any) => {
+    if (typeof node?.getAttribute !== 'function' || !node.hasAttribute?.('style')) return;
+    const kept = (node.getAttribute('style') || '')
+      .split(';')
+      .map((decl: string) => decl.trim())
+      .filter((decl: string) => {
+        const colon = decl.indexOf(':');
+        if (colon < 0) return false;
+        const prop = decl.slice(0, colon).trim().toLowerCase();
+        const value = decl.slice(colon + 1).trim();
+        return ALLOWED_STYLE_PROPS.has(prop) && !!value && !UNSAFE_CSS_VALUE.test(value);
+      });
+    if (kept.length) node.setAttribute('style', `${kept.join('; ')};`);
+    else node.removeAttribute('style');
+  });
+}
+
 /** Matches a real tag rather than a stray `<` or a `>` used as punctuation. */
 const HTML_TAG_PATTERN = /<(\/?)([a-z][a-z0-9]*)\b[^>]*>/i;
 
@@ -48,14 +82,22 @@ function escapeHtml(text: string): string {
 
 /**
  * Converts legacy plain text into the paragraph markup the editor and reader
- * expect, preserving the line breaks that `whitespace-pre-line` used to render.
+ * expect, keeping the line breaks that `whitespace-pre-line` used to render.
+ *
+ * One paragraph per line rather than `<br>` inside one paragraph: Quill's
+ * clipboard converter rewrites `<p>a<br>b</p>` to `<p>a</p><p>b</p>` when the
+ * editor loads it, which would fire a change on mount, mark an untouched form
+ * dirty, and leave the admin view a line-height apart from the reader. Emitting
+ * what Quill would produce anyway makes the conversion a fixed point.
  */
 export function plainTextToHtml(text: string): string {
-  const normalized = text.replace(/\r\n/g, '\n');
-  if (!normalized.trim()) return '';
+  // Trailing blank lines are dropped: Quill discards the empty trailing
+  // paragraph they would produce, which would otherwise be a drift on mount.
+  const normalized = text.replace(/\r\n/g, '\n').trimEnd();
+  if (!normalized) return '';
   return normalized
-    .split(/\n{2,}/)
-    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`)
+    .split('\n')
+    .map((line) => `<p>${escapeHtml(line) || '<br>'}</p>`)
     .join('');
 }
 
@@ -68,6 +110,7 @@ export function toRichHtml(value: string | null | undefined): string {
 /** Strips anything executable, keeping the formatting the admin applied. */
 export function sanitizeRichHtml(html: string): string {
   if (!html) return '';
+  registerStyleFilter();
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
