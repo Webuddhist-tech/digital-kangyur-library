@@ -13,6 +13,7 @@ import api from '@/utils/api';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
 import KarchagSearch from '@/components/catalog/KarchagSearch';
 import { Input } from '@/components/ui/atoms/input';
+import { RichTextContent } from '@/components/ui/molecules/RichTextContent';
 
 const Catalog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -529,11 +530,11 @@ const Catalog = () => {
                 // Display content if subcategory has content
                 return (
                   <div className="max-w-4xl mx-auto min-h-[60vh] mt-12">
-                    <div className="prose prose-lg max-w-none ">
-                      <div className={`whitespace-pre-line ${isTibetan ? 'tibetan text-lg leading-relaxed' : 'text-gray-700'}`}>
-                        {selectedSubCategory.content}
-                      </div>
-                    </div>
+                    <RichTextContent
+                      value={selectedSubCategory.content}
+                      tibetan={isTibetan}
+                      className={isTibetan ? 'text-lg leading-relaxed' : 'text-gray-700'}
+                    />
                   </div>
                 );
               } else {

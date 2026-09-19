@@ -1,0 +1,171 @@
+/**
+ * Shared styling for admin-authored rich text.
+ *
+ * The public reader reuses Quill's own `.ql-editor` class so list markers,
+ * indent levels and block spacing resolve from the exact stylesheet that was
+ * active while the admin was typing - the alternative, re-deriving Quill 2's
+ * counter-based list rules by hand, drifts the moment Quill changes them.
+ * Everything below either neutralises the editor-only layout bits of that class
+ * or fills gaps Tailwind's preflight leaves (headings, links, list padding).
+ */
+@import 'react-quill-new/dist/quill.snow.css';
+
+/* ---------------------------------------------------------------- reader --- */
+
+.rich-text-content.ql-editor {
+  padding: 0;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.rich-text-content.ql-editor > * {
+  cursor: auto;
+}
+
+/* ------------------------------------------------- shared block typography --- */
+
+.rich-text-content h1,
+.rich-text-editor .ql-editor h1 {
+  font-size: 1.75em;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0.6em 0 0.4em;
+}
+
+.rich-text-content h2,
+.rich-text-editor .ql-editor h2 {
+  font-size: 1.4em;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0.6em 0 0.4em;
+}
+
+.rich-text-content h3,
+.rich-text-editor .ql-editor h3 {
+  font-size: 1.15em;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0.6em 0 0.4em;
+}
+
+.rich-text-content h1:first-child,
+.rich-text-content h2:first-child,
+.rich-text-content h3:first-child {
+  margin-top: 0;
+}
+
+.rich-text-content p,
+.rich-text-editor .ql-editor p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content p:last-child,
+.rich-text-editor .ql-editor p:last-child {
+  margin-bottom: 0;
+}
+
+/* Quill 2 renders both bullet and numbered lists as <ol data-list="...">; the
+   markers come from quill.snow.css, so only the indentation is set here. */
+.rich-text-content ol,
+.rich-text-content ul,
+.rich-text-editor .ql-editor ol,
+.rich-text-editor .ql-editor ul {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content blockquote,
+.rich-text-editor .ql-editor blockquote {
+  margin: 0 0 0.75em;
+  font-style: italic;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.rich-text-content a,
+.rich-text-editor .ql-editor a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.rich-text-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content th,
+.rich-text-content td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.4em 0.6em;
+  text-align: start;
+}
+
+/* ---------------------------------------------------------------- editor --- */
+
+.rich-text-editor {
+  overflow: hidden;
+}
+
+.rich-text-editor .ql-toolbar.ql-snow {
+  border: none;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.4);
+  padding: 6px 8px;
+}
+
+.rich-text-editor .ql-container.ql-snow {
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: var(--rich-text-min-height, 10.5rem);
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: 0.75rem;
+  line-height: 1.7;
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+  left: 0.75rem;
+  right: 0.75rem;
+}
+
+/* Tibetan script needs the bundled webfont and extra leading to stay legible. */
+.rich-text-editor--tibetan .ql-editor {
+  font-family: 'CustomTibetan', serif;
+  letter-spacing: 0.025em;
+  line-height: 2;
+}
+
+/* Quill's dropdowns are positioned inside the editor, which sits in a Radix
+   dialog with its own stacking context - without this they render behind it. */
+.rich-text-editor .ql-snow .ql-picker-options {
+  z-index: 60;
+}
+
+.rich-text-editor .ql-snow .ql-tooltip {
+  z-index: 60;
+}
+
+/* The link tooltip is absolutely positioned and gets clipped at the editor's
+   left edge on narrow screens. */
+.rich-text-editor .ql-snow .ql-tooltip {
+  left: 0.75rem !important;
+  white-space: normal;
+  max-width: calc(100% - 1.5rem);
+}

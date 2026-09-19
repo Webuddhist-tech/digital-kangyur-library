@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/atoms/button";
 import { Input } from "@/components/ui/atoms/input";
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { RichTextEditor } from "@/components/ui/molecules/RichTextEditor";
 import { Switch } from "@/components/ui/atoms/switch";
 import { Label } from "@/components/ui/atoms/label";
 import {
@@ -19,6 +19,8 @@ import {
   DialogFooter,
 } from "@/components/ui/atoms/dialog";
 import api from '@/utils/api';
+import { toast } from 'sonner';
+import { isRichTextEmpty } from '@/utils/richText';
 
 interface TimelineEventFormProps {
   isOpen: boolean;
@@ -147,7 +149,14 @@ export const TimelineEventForm = ({ isOpen, onClose, mode, data, onSave }: Timel
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // The rich text editor is not a form control, so the `required` the old
+    // description textarea carried has to be enforced here.
+    if (isRichTextEmpty(formData.description_english)) {
+      toast.error('English description is required');
+      return;
+    }
+
     // Prepare data for API
     const submitData: any = {
       title_english: formData.title_english,
@@ -241,22 +250,22 @@ export const TimelineEventForm = ({ isOpen, onClose, mode, data, onSave }: Timel
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="description_english">English Description *</Label>
-              <Textarea
+              <RichTextEditor
                 id="description_english"
                 value={formData.description_english}
-                onChange={(e) => setFormData({ ...formData, description_english: e.target.value })}
-                required
+                onChange={(html) => setFormData({ ...formData, description_english: html })}
+                rows={5}
                 placeholder="Enter English description"
-                className="min-h-[120px]"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description_tibetan">Tibetan Description</Label>
-              <Textarea
+              <RichTextEditor
                 id="description_tibetan"
                 value={formData.description_tibetan}
-                onChange={(e) => setFormData({ ...formData, description_tibetan: e.target.value })}
-                className="font-tibetan min-h-[120px]"
+                onChange={(html) => setFormData({ ...formData, description_tibetan: html })}
+                rows={5}
+                tibetan
                 placeholder="བོད་ཡིག་གི་ནང་དོན།"
               />
             </div>

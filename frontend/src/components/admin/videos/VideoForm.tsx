@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/atoms/button";
 import { Input } from "@/components/ui/atoms/input";
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { RichTextEditor } from "@/components/ui/molecules/RichTextEditor";
 import { Switch } from "@/components/ui/atoms/switch";
 import { Label } from "@/components/ui/atoms/label";
 import { Upload, X } from 'lucide-react';
@@ -164,21 +164,22 @@ export const VideoForm = ({ isOpen, onClose, mode, data, onSave }: VideoFormProp
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="english_description">{t('englishDescription')}</Label>
-              <Textarea
+              <RichTextEditor
                 id="english_description"
                 value={formData.english_description}
-                onChange={(e) => setFormData({ ...formData, english_description: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, english_description: html })}
+                rows={4}
                 placeholder={t('enterEnglishDescription')}
-                className="min-h-[100px]"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="tibetan_description">{t('tibetanDescription')}</Label>
-              <Textarea
+              <RichTextEditor
                 id="tibetan_description"
                 value={formData.tibetan_description}
-                onChange={(e) => setFormData({ ...formData, tibetan_description: e.target.value })}
-                className="font-tibetan min-h-[100px]"
+                onChange={(html) => setFormData({ ...formData, tibetan_description: html })}
+                rows={4}
+                tibetan
                 placeholder={t('enterTibetanDescription')}
               />
             </div>

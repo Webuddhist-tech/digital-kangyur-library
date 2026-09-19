@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/atoms/button';
 import { Input } from '@/components/ui/atoms/input';
 import { Label } from "@/components/ui/atoms/label";
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { RichTextEditor } from "@/components/ui/molecules/RichTextEditor";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/atoms/radio-group";
 import {
   Dialog,
@@ -184,19 +184,21 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
           <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
               <Label htmlFor="description_tibetan">{t('tibetanDescription')} </Label>
-              <Textarea
+              <RichTextEditor
                 id="description_tibetan"
                 value={formData.description_tibetan}
-                onChange={(e) => setFormData({ ...formData, description_tibetan: e.target.value })}
-                className="font-tibetan"
+                onChange={(html) => setFormData({ ...formData, description_tibetan: html })}
+                rows={4}
+                tibetan
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description_english">{t('englishDescription')} </Label>
-              <Textarea
+              <RichTextEditor
                 id="description_english"
                 value={formData.description_english}
-                onChange={(e) => setFormData({ ...formData, description_english: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, description_english: html })}
+                rows={4}
               />
             </div>
            
@@ -219,11 +221,12 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
           {formData.category_type === 'sub' && formData.only_content && (
             <div className="space-y-2">
               <Label htmlFor="content">{t('content')}</Label>
-              <Textarea
+              <RichTextEditor
                 id="content"
                 value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                onChange={(html) => setFormData({ ...formData, content: html })}
                 rows={10}
+                tibetan={isTibetan}
                 placeholder="Enter content here..."
               />
             </div>

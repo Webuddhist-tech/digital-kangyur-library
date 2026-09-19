@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/atoms/card";
 import { useLanguage } from '@/hooks/useLanguage';
 import { toast } from 'sonner';
 import api from '@/utils/api';
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { RichTextEditor } from "@/components/ui/molecules/RichTextEditor";
 import { cn } from '@/lib/utils';
 
 interface TextEditModalProps {
@@ -939,24 +939,23 @@ export const TextEditModal = ({
                                       <Label htmlFor={`${currentSectionFields.tibetan}`}>
                                         {t('tibetanContent')}
                                       </Label>
-                                      <Textarea
+                                      <RichTextEditor
                                         id={currentSectionFields.tibetan}
                                         value={summaryFormData[currentSectionFields.tibetan] ?? ''}
-                                        onChange={(e) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.tibetan]: e.target.value })}
-                                        className={cn("font-tibetan resize-none", isTibetan && "tibetan")}
+                                        onChange={(html) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.tibetan]: html })}
                                         rows={currentSectionFields.rows}
+                                        tibetan
                                       />
                                     </div>
                                     <div className="space-y-2">
                                       <Label htmlFor={`${currentSectionFields.english}`}>
                                         {t('englishContent')}
                                       </Label>
-                                      <Textarea
+                                      <RichTextEditor
                                         id={currentSectionFields.english}
                                         value={summaryFormData[currentSectionFields.english] ?? ''}
-                                        onChange={(e) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.english]: e.target.value })}
+                                        onChange={(html) => setSummaryFormData({ ...summaryFormData, [currentSectionFields.english]: html })}
                                         rows={currentSectionFields.rows}
-                                        className="resize-none"
                                       />
                                     </div>
                                 

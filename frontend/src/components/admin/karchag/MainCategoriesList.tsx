@@ -9,6 +9,7 @@ import api from '@/utils/api';
 import { toast } from 'sonner';
 import { CategoryForm } from './CategoryForm';
 import { useLanguage } from '@/hooks/useLanguage';
+import { richTextToPlain } from '@/utils/richText';
 
 interface MainCategoriesListProps {
   onEditCategory?: (category: any) => void;
@@ -201,7 +202,7 @@ export const MainCategoriesList: React.FC<MainCategoriesListProps> = ({
                     <p className="text-sm font-medium text-kangyur-maroon english mt-1">
                     {category.name_english}
                     </p>
-                    <p className="text-sm text-gray-600 mt-2">{category.description_english}</p>
+                    <p className="text-sm text-gray-600 mt-2">{richTextToPlain(category.description_english)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(category)}>

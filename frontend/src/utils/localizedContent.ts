@@ -1,10 +1,16 @@
 /**
  * Bilingual UI helpers: prefer the string for the active site language (Tibetan / English),
  * and fall back to the other language when the preferred value is empty or whitespace.
+ *
+ * Content authored in the admin rich text editor is stored as HTML, so "empty"
+ * has to mean "renders as nothing" rather than "is the empty string" - markup
+ * like `<p><br></p>` is blank on screen but would otherwise beat a real value in
+ * the other language.
  */
+import { isRichTextEmpty } from './richText';
 
 export function hasLocalizedContent(value: string | null | undefined): boolean {
-  return typeof value === 'string' && value.trim().length > 0;
+  return typeof value === 'string' && !isRichTextEmpty(value);
 }
 
 export function pickBilingualText(
@@ -12,8 +18,8 @@ export function pickBilingualText(
   tibetan: string | null | undefined,
   english: string | null | undefined
 ): string {
-  const t = (tibetan ?? '').trim();
-  const e = (english ?? '').trim();
+  const t = hasLocalizedContent(tibetan) ? (tibetan as string).trim() : '';
+  const e = hasLocalizedContent(english) ? (english as string).trim() : '';
   if (isTibetan) {
     return t || e;
   }
@@ -26,8 +32,8 @@ export function pickBilingualDisplay(
   tibetan: string | null | undefined,
   english: string | null | undefined
 ): { text: string; scriptIsTibetan: boolean } {
-  const t = (tibetan ?? '').trim();
-  const e = (english ?? '').trim();
+  const t = hasLocalizedContent(tibetan) ? (tibetan as string).trim() : '';
+  const e = hasLocalizedContent(english) ? (english as string).trim() : '';
   if (isTibetan) {
     if (t) return { text: t, scriptIsTibetan: true };
     return { text: e, scriptIsTibetan: false };

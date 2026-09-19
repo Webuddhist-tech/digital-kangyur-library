@@ -4,6 +4,7 @@ import { Book, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import useLanguage from '@/hooks/useLanguage';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
+import { richTextToPlain } from '@/utils/richText';
 
 interface Item {
   id: string;
@@ -40,7 +41,7 @@ const TextCard = ({
 }: TextCardProps) => {
   const { isTibetan } = useLanguage();
   const derge_id = item.derge_id || undefined;
-  const summary = pickBilingualText(isTibetan, item?.summary?.tibetan, item?.summary?.english);
+  const summary = richTextToPlain(pickBilingualText(isTibetan, item?.summary?.tibetan, item?.summary?.english));
   const volume = item.volume || undefined;
   const title =
     pickBilingualText(isTibetan, item.title?.tibetan, item.title?.english) ||

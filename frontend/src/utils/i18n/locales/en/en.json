@@ -228,6 +228,7 @@
     "enterEnglishTitle": "Enter English title",
     "enterTibetanTitle": "བོད་ཡིག་གི་འགོ་བརྗོད།",
     "enterEnglishContent": "Enter English content",
+    "pleaseFillAllRequiredFields": "Please fill in all required fields",
     "enterTibetanContent": "བོད་ཡིག་གི་ནང་དོན།",
     "enterThumbnailUrl": "Enter thumbnail URL or upload a file",
     "resetThumbnailUrl": "Reset Thumbnail URL",

@@ -9,6 +9,7 @@ import useLanguage from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
 import api from '@/utils/api';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
+import { richTextToPlain } from '@/utils/richText';
 
 interface NewsItem {
   id: string;
@@ -23,7 +24,7 @@ interface NewsItem {
 
 const NewsCard = ({ news, isTibetan, t }: { news: NewsItem, isTibetan: boolean, t: any }) => {
   const titleDisp = pickBilingualDisplay(isTibetan, news.titleTibetan, news.title);
-  const descText = pickBilingualText(isTibetan, news.tibetanDescription, news.englishDescription);
+  const descText = richTextToPlain(pickBilingualText(isTibetan, news.tibetanDescription, news.englishDescription));
   const descPreview =
     descText.length > 100 ? `${descText.slice(0, 100)}...` : descText || null;
 

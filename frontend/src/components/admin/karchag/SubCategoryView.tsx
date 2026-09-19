@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/atoms/button';
 import { Input } from '@/components/ui/atoms/input';
-import { Textarea } from '@/components/ui/atoms/textarea';
+import { RichTextEditor } from '@/components/ui/molecules/RichTextEditor';
+import { RichTextContent } from '@/components/ui/molecules/RichTextContent';
 import { Card } from '@/components/ui/atoms/card';
 import { Edit, Search, Plus } from 'lucide-react';
 import api from '@/utils/api';
@@ -357,18 +358,20 @@ export const SubCategoryView: React.FC = () => {
         // For Tantra / Scholarly Work: Show content only
         <Card className="p-6 bg-gray-50">
           {isEditingContent ? (
-            <Textarea
+            <RichTextEditor
               value={contentDraft}
-              onChange={(e) => setContentDraft(e.target.value)}
+              onChange={setContentDraft}
               rows={16}
-              className={`min-h-[320px] whitespace-pre-wrap ${isTibetan ? 'tibetan' : ''}`}
-              style={{ fontFamily: isTibetan ? 'CustomTibetan' : undefined }}
+              tibetan={isTibetan}
+              className="bg-white"
               placeholder={t('enterContentHere')}
             />
           ) : (
-            <p className="text-gray-700 whitespace-pre-wrap tibetan">
-              {subCategory.content || ''}
-            </p>
+            <RichTextContent
+              value={subCategory.content || ''}
+              tibetan
+              className="text-gray-700"
+            />
           )}
         </Card>
       ) : (

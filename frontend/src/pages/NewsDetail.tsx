@@ -8,6 +8,7 @@ import useLanguage from '@/hooks/useLanguage';
 import api from '@/utils/api';
 import { cn } from '@/lib/utils';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
+import { RichTextContent } from '@/components/ui/molecules/RichTextContent';
 
 interface NewsArticle {
   id: string;
@@ -143,16 +144,14 @@ const NewsDetail = () => {
               </div>
             </div>
 
-            <div className="prose prose-lg max-w-none tibetan">
-              <div
-                className={cn(
-                  'text-kangyur-dark leading-relaxed whitespace-pre-line',
-                  bodyDisp.scriptIsTibetan ? 'tibetan' : 'english'
-                )}
-              >
-                {bodyText}
-              </div>
-            </div>
+            <RichTextContent
+              value={bodyText}
+              tibetan={bodyDisp.scriptIsTibetan}
+              className={cn(
+                'text-kangyur-dark leading-relaxed',
+                !bodyDisp.scriptIsTibetan && 'english'
+              )}
+            />
           </CardContent>
         </Card>
       </div>

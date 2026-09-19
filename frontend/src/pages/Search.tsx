@@ -7,6 +7,7 @@ import useLanguage from '@/hooks/useLanguage';
 import api from '@/utils/api';
 import { cn } from '@/lib/utils';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
+import { richTextToPlain } from '@/utils/richText';
 
 type CatalogSectionHit = {
   id: string;
@@ -151,10 +152,12 @@ const Search: React.FC = () => {
                       section.name_tibetan,
                       section.name_english
                     );
-                    const desc = pickBilingualText(
-                      isTibetan,
-                      section.description_tibetan,
-                      section.description_english
+                    const desc = richTextToPlain(
+                      pickBilingualText(
+                        isTibetan,
+                        section.description_tibetan,
+                        section.description_english
+                      )
                     );
                     const collectionName = section.main_category
                       ? pickBilingualText(

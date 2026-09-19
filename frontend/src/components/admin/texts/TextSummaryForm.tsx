@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/atoms/button";
-import { Textarea } from "@/components/ui/atoms/textarea";
+import { RichTextEditor } from "@/components/ui/molecules/RichTextEditor";
 import { Label } from "@/components/ui/atoms/label";
 import {
   Dialog,
@@ -307,24 +307,23 @@ export const TextSummaryForm = ({ isOpen, onClose, textId, textTitle, onSave }: 
                           <Label htmlFor={`${currentSectionFields.english}`}>
                             {t('englishContent')}
                           </Label>
-                          <Textarea
+                          <RichTextEditor
                             id={currentSectionFields.english}
                             value={formData[currentSectionFields.english] ?? ''}
-                            onChange={(e) => setFormData({ ...formData, [currentSectionFields.english]: e.target.value })}
+                            onChange={(html) => setFormData({ ...formData, [currentSectionFields.english]: html })}
                             rows={currentSectionFields.rows}
-                            className="resize-none"
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor={`${currentSectionFields.tibetan}`}>
                             {t('tibetanContent')}
                           </Label>
-                          <Textarea
+                          <RichTextEditor
                             id={currentSectionFields.tibetan}
                             value={formData[currentSectionFields.tibetan] ?? ''}
-                            onChange={(e) => setFormData({ ...formData, [currentSectionFields.tibetan]: e.target.value })}
-                            className={cn("font-tibetan resize-none", isTibetan && "tibetan")}
+                            onChange={(html) => setFormData({ ...formData, [currentSectionFields.tibetan]: html })}
                             rows={currentSectionFields.rows}
+                            tibetan
                           />
                         </div>
                       </div>
