@@ -252,15 +252,21 @@ export const MainCategoryView: React.FC = () => {
         </div>
       )}
 
-      <CategoryForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        mode={formMode}
-        data={editingItem}
-        mainCategories={mainCategories}
-        defaultMainCategoryId={mainId || null}
-        onSave={handleSave}
-      />
+      {isFormOpen && (
+        <CategoryForm
+          key={`${formMode}-${editingItem?.id ?? 'create'}`}
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false);
+            setEditingItem(null);
+          }}
+          mode={formMode}
+          data={editingItem}
+          mainCategories={mainCategories}
+          defaultMainCategoryId={mainId || null}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 };

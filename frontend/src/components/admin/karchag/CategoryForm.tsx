@@ -69,13 +69,18 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     };
   };
 
-  const [formData, setFormData] = useState(() =>
+  const initialFormData =
     data && mode === 'edit'
       ? buildEditFormData(data)
-      : buildCreateFormData(defaultMainCategoryId || null)
-  );
+      : buildCreateFormData(defaultMainCategoryId || null);
 
-  // Reset on open so consecutive creates do not keep the last submission.
+  const [formData, setFormData] = useState(initialFormData);
+
+  // Remount form fields (esp. ReactQuill) whenever a different create/edit session opens,
+  // so the previous dialog's rich-text content cannot leak into the next one.
+  const formInstanceKey = `${mode}-${data?.id ?? 'new'}-${defaultMainCategoryId ?? 'none'}`;
+
+  // Reset on open so consecutive creates/edits do not keep the last submission.
   useEffect(() => {
     if (!isOpen) return;
     if (data && mode === 'edit') {
@@ -93,12 +98,13 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
   const showDisplayOrder = formData.category_type === 'sub';
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} >
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-scroll" style={{fontFamily: isTibetan ? 'CustomTibetan' : ''}}>
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? t('createNewCategory') : t('editCategory')}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {isOpen && (
+        <form key={formInstanceKey} onSubmit={handleSubmit} className="space-y-6">
           {/* Category Type Selection - only show if no defaultMainCategoryId */}
           {!defaultMainCategoryId && (
             <div className="space-y-4">
@@ -240,6 +246,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -396,15 +396,21 @@ export const SubCategoryView: React.FC = () => {
       )}
 
       {/* Category Form */}
-      <CategoryForm
-        isOpen={isCategoryFormOpen}
-        onClose={() => setIsCategoryFormOpen(false)}
-        mode={formMode}
-        data={editingCategory}
-        mainCategories={mainCategories}
-        defaultMainCategoryId={mainId || null}
-        onSave={handleSaveCategory}
-      />
+      {isCategoryFormOpen && (
+        <CategoryForm
+          key={`${formMode}-${editingCategory?.id ?? 'create'}`}
+          isOpen={isCategoryFormOpen}
+          onClose={() => {
+            setIsCategoryFormOpen(false);
+            setEditingCategory(null);
+          }}
+          mode={formMode}
+          data={editingCategory}
+          mainCategories={mainCategories}
+          defaultMainCategoryId={mainId || null}
+          onSave={handleSaveCategory}
+        />
+      )}
 
       {/* Create / edit text: same modal as edit (metadata + translation / summary tabs) */}
      
