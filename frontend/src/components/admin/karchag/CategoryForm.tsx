@@ -90,8 +90,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
     onSave(formData);
   };
 
-  const showDisplayOrder =
-    formData.category_type === 'sub' && isContentOnlyMainCategory(formData.main_category_id);
+  const showDisplayOrder = formData.category_type === 'sub';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} >
@@ -204,7 +203,7 @@ export const CategoryForm = ({ isOpen, onClose, mode, data, mainCategories, defa
            
           </div>
 
-          {/* Display order for Tantra / Scholarly Work subcategories */}
+          {/* Display order for all subcategories */}
           {showDisplayOrder && (
             <div className="space-y-2">
               <Label htmlFor="order_index">{t('displayOrder')} </Label>
