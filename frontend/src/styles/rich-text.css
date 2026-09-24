@@ -23,6 +23,22 @@
   color: inherit;
 }
 
+/* More specific than `.tibetan`, which this rule's font-family: inherit would
+   otherwise cancel. Same webfont the sutra text tab shows. */
+.rich-text-content.ql-editor.tibetan {
+  font-family: 'CustomTibetan', 'Noto Sans Tibetan', serif;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+}
+
+/* Sarchen is a heavy cut and has no lighter file. A background-colored stroke
+   trims the edges so body text reads a little lighter. */
+.rich-text-content.ql-editor.tibetan.reader-text {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-stroke: 0.9px hsl(var(--card));
+}
+
 .rich-text-content.ql-editor > * {
   cursor: auto;
 }

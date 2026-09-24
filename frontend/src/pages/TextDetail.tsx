@@ -13,6 +13,9 @@ import { RichTextContent } from '@/components/ui/molecules/RichTextContent';
 
 
 
+const textTabTriggerClass =
+  "h-12 rounded-none border-b-2 border-transparent px-2 text-base font-semibold text-kangyur-dark hover:bg-white/70 data-[state=active]:border-kangyur-orange data-[state=active]:bg-white data-[state=active]:text-kangyur-maroon data-[state=active]:shadow-none";
+
 function link_prefix(link: string) {
   if (link.startsWith('https://') || link.startsWith('http://')) {
     return link;
@@ -408,14 +411,14 @@ const TextDetail = () => {
             <Card className="border border-kangyur-orange/10 rounded-xl shadow-sm">
               <CardContent className="p-0">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="w-full grid grid-cols-3 border-b ">
-                    <TabsTrigger value="metadata" className="rounded-none text-md">
+                  <TabsList className="w-full h-auto grid grid-cols-3 gap-0 rounded-none bg-kangyur-cream p-0 border-b-2 border-kangyur-brown/40">
+                    <TabsTrigger value="metadata" className={textTabTriggerClass}>
                       {t('metadata')}
                     </TabsTrigger>
-                    <TabsTrigger value="summary" className="rounded-none text-md">
+                    <TabsTrigger value="summary" className={textTabTriggerClass}>
                       {t('text')}
                     </TabsTrigger>
-                    <TabsTrigger value="pdf" className="rounded-none text-md">
+                    <TabsTrigger value="pdf" className={textTabTriggerClass}>
                       {t('yesheDeSourceText')}
                     </TabsTrigger>
                   </TabsList>
@@ -524,7 +527,7 @@ const TextDetail = () => {
                                 <RichTextContent
                                   value={section.content}
                                   tibetan={section.scriptIsTibetan}
-                                  className="text-base sm:text-lg leading-relaxed text-foreground break-words"
+                                  className="reader-text text-base sm:text-lg font-normal leading-relaxed text-foreground break-words"
                                 />
                               </div>
                             ))}

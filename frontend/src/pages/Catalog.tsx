@@ -13,6 +13,7 @@ import api from '@/utils/api';
 import { pickBilingualDisplay, pickBilingualText } from '@/utils/localizedContent';
 import KarchagSearch from '@/components/catalog/KarchagSearch';
 import { Input } from '@/components/ui/atoms/input';
+import { Card, CardContent } from '@/components/ui/atoms/card';
 import { RichTextContent } from '@/components/ui/molecules/RichTextContent';
 
 const Catalog = () => {
@@ -527,15 +528,21 @@ const Catalog = () => {
             // Render subcategory content or text list
             if (selectedItem && selectedSubCategory) {
               if (selectedSubCategory.content) {
-                // Display content if subcategory has content
+                // Same reader font and type as the sutra text tab.
+                const scriptIsTibetan = /[\u0F00-\u0FFF]/.test(selectedSubCategory.content);
                 return (
-                  <div className="max-w-4xl mx-auto min-h-[60vh] mt-12">
-                    <RichTextContent
-                      value={selectedSubCategory.content}
-                      tibetan={isTibetan}
-                      className={isTibetan ? 'text-lg leading-relaxed' : 'text-gray-700'}
-                    />
-                  </div>
+                  <Card className="border border-kangyur-orange/10 rounded-xl shadow-sm min-h-[60vh]">
+                    <CardContent
+                      className="p-4 sm:p-6"
+                      style={{ fontFamily: scriptIsTibetan ? 'CustomTibetan' : '' }}
+                    >
+                      <RichTextContent
+                        value={selectedSubCategory.content}
+                        tibetan={scriptIsTibetan}
+                        className="reader-text text-base sm:text-lg font-normal leading-relaxed text-foreground break-words"
+                      />
+                    </CardContent>
+                  </Card>
                 );
               } else {
                 // Display text list if subcategory doesn't have content
