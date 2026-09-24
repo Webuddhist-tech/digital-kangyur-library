@@ -527,7 +527,7 @@ const TextDetail = () => {
                                 <RichTextContent
                                   value={section.content}
                                   tibetan={section.scriptIsTibetan}
-                                  className="reader-text text-base sm:text-lg font-normal leading-relaxed text-foreground break-words"
+                                  className="text-base sm:text-lg leading-relaxed text-gray-600 break-words"
                                 />
                               </div>
                             ))}
